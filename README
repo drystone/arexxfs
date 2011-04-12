@@ -18,7 +18,7 @@ For example, to get raw data from device 9696:
 
 #cat /sys/kernel/tlx00/9696/raw
 
-For simple temperature sensors the raw value should be multiploed by 0.078 to
+For simple temperature sensors the raw value should be multiploed by 0.0078 to
 get degrees celcius.
 
 With thanks to Kornelius Rohmeyer for his work in decoding the tlx00 USB protocol:
