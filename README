@@ -1,0 +1,23 @@
+Arexx tlx00 kernel module tested on debian 2.6.32 x86 kernel with Arexx BS-500
+USB data logger.
+
+Installation:
+
+# cd tlx00
+# make
+# insmod tlx00
+
+When the arexx device is attached /sys/kernel/tlx00 dircetory appears. A
+subdirectory of this is created for each sensor that is detected. This sub-
+directory is named after the sensor's unique device id and inside is a file
+named 'raw' which contains the raw reading from the sensor.
+
+For example, to get raw data from device 9696:
+
+#cat /sys/kernel/tlx00/9696/raw
+
+For simple temperature sensors the raw value should be multiploed by 0.078 to
+get degrees celcius.
+
+With thanks to Kornelius Rohmeyer for his work in decoding the tlx00 USB protocol:
+http://www.algorithm-forge.com/techblog/2009/12/using-libusb-to-write-a-linux-usb-driver-for-the-arexx-tl-500-part-i/
