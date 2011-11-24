@@ -1,3 +1,8 @@
+DEBFLAGS = -O2
+#DEBFLAGS = -O -g -DDEBUG
+
+EXTRA_CFLAGS += $(DEBFLAGS)
+
 obj-m += tlx00.o
 
 all:

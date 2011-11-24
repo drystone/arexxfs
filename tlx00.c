@@ -18,11 +18,22 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/usb.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
+#include <linux/slab.h>
+#endif
+
+#undef PDEBUG
+#define PDEBUG(fmt, args...)
+#ifdef DEBUG
+#  undef PDEBUG
+#  define PDEBUG(fmt, args...) printk( KERN_DEBUG "tlx00: " fmt, ## args)
+#endif
 
 #define DRIVER_AUTHOR "John Hedges, john@drystone.co.uk"
 #define DRIVER_DESC "Arexx temperature logger driver for linux (c) 2011"
@@ -54,7 +65,7 @@ static struct tlx00_dev* dev = NULL;
 
 static void poll(struct work_struct *unused)
 {
-    printk(KERN_INFO "poll\n");
+    PDEBUG("poll\n");
     usb_fill_bulk_urb(dev->urb, dev->usbdev,
                      usb_sndbulkpipe(dev->usbdev, dev->bulk_out_endpointAddr),
                      dev->iobuf, dev->iobufsize, sndcomplete, NULL);
@@ -81,7 +92,9 @@ static void sensor_release(struct kobject *kobj)
 
 static struct attribute sensor_attrib = {
     .name = "raw",
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
     .owner = NULL,
+#endif
     .mode = S_IRUGO
 };
 
@@ -117,8 +130,8 @@ static void rcvcomplete(struct urb* urb)
     struct kobject *kobj;
     struct sensor *sens;
 
-    printk(KERN_INFO "rcvcomplete %d\n", urb->actual_length);
-    printk(KERN_INFO "%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\n",
+    PDEBUG("rcvcomplete %d\n", urb->actual_length);
+    PDEBUG("%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\n",
         dev->iobuf[0], dev->iobuf[1], dev->iobuf[2], dev->iobuf[3],
         dev->iobuf[4], dev->iobuf[5], dev->iobuf[6], dev->iobuf[7]);
     switch (dev->iobuf[1]) {
@@ -133,7 +146,8 @@ static void rcvcomplete(struct urb* urb)
             memset(sens, 0, sizeof(struct sensor));
             kobj = &sens->kobj;
             kobj->kset = dev->kset;
-            kobject_init_and_add(kobj, &sensor_kobj_type, NULL, buf);
+            if (!kobject_init_and_add(kobj, &sensor_kobj_type, NULL, buf))
+                printk(KERN_ERR "Failed to add kobject");
         }
         sens->raw = (dev->iobuf[4]<<8)+dev->iobuf[5];
         queue_delayed_work(dev->workqueue, &pollwork, 0);
@@ -145,7 +159,7 @@ static void rcvcomplete(struct urb* urb)
 
 static void sndcomplete(struct urb* urb)
 {
-    printk(KERN_INFO "sndcomplete %d\n", urb->actual_length);
+    PDEBUG("sndcomplete %d\n", urb->actual_length);
 
     usb_fill_bulk_urb(dev->urb, dev->usbdev,
                      usb_rcvbulkpipe(dev->usbdev, dev->bulk_in_endpointAddr),
@@ -186,7 +200,7 @@ static int tlx00_probe(struct usb_interface *intf, const struct usb_device_id *i
     int i, buffer_size;
     int errno;
 
-    printk(KERN_INFO "probed\n");
+    PDEBUG("probed\n");
  
     dev = kmalloc(sizeof(struct tlx00_dev), GFP_KERNEL);
     if (!dev) {
@@ -195,7 +209,7 @@ static int tlx00_probe(struct usb_interface *intf, const struct usb_device_id *i
     }
     memset(dev, 0, sizeof(struct tlx00_dev));
 
-    dev->kset = kset_create_and_add("tlx00", NULL, kernel_kobj);
+    dev->kset = kset_create_and_add("tlx00", NULL, NULL);
     if (!dev->kset) {
         errno = -ENOMEM;
         goto error;
@@ -263,7 +277,7 @@ error:
 
 static void tlx00_disconnect(struct usb_interface *intf)
 {
-    printk(KERN_INFO "disconnect\n");
+    PDEBUG("disconnect\n");
     cleanup();
 }
 
