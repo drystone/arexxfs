@@ -146,7 +146,7 @@ static void rcvcomplete(struct urb* urb)
             memset(sens, 0, sizeof(struct sensor));
             kobj = &sens->kobj;
             kobj->kset = dev->kset;
-            if (!kobject_init_and_add(kobj, &sensor_kobj_type, NULL, buf))
+            if (kobject_init_and_add(kobj, &sensor_kobj_type, NULL, buf))
                 printk(KERN_ERR "Failed to add kobject");
         }
         sens->raw = (dev->iobuf[4]<<8)+dev->iobuf[5];
