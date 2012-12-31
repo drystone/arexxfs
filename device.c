@@ -15,6 +15,7 @@
 #define IOLEN   64
 
 tlx_reading * tlx_root_reading = NULL;
+time_t tlx_mtime, tlx_ctime;
 
 static int _record_reading(unsigned int id, unsigned int raw)
 {
@@ -25,6 +26,7 @@ static int _record_reading(unsigned int id, unsigned int raw)
         if (p->id == id)
         {
             p->raw = raw;
+            p->mtime = time(NULL);
             return 0;
         }
         p = p->next;
@@ -38,6 +40,7 @@ static int _record_reading(unsigned int id, unsigned int raw)
     }
     p->id = id;
     p->raw = raw;
+    p->ctime = p->mtime = tlx_mtime = time(NULL);
     p->next = tlx_root_reading;
     tlx_root_reading = p;
     return 0;
@@ -71,6 +74,9 @@ static int do_loop(libusb_device_handle * handle)
 }
 
 void * tlx_thread(void * arg) {
+    // set mtime and ctime for directory
+    tlx_ctime = tlx_mtime = time(NULL);
+
     libusb_device **devs = NULL;
 
     (void) arg;

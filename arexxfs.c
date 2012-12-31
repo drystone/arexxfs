@@ -32,13 +32,18 @@ static int _getattr(const char *path, struct stat *stbuf)
     if (strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0755;
         stbuf->st_nlink = 2;
+        stbuf->st_ctime = tlx_ctime;
+        stbuf->st_mtime = tlx_mtime;
         return 0;
     }
 
-    if (_get_reading(path + 1)) {
+    tlx_reading * p = _get_reading(path + 1);
+    if (p) {
         stbuf->st_mode = S_IFREG | 0444;
         stbuf->st_nlink = 1;
         stbuf->st_size = 5;
+        stbuf->st_ctime = p->ctime;
+        stbuf->st_mtime = p->mtime;
         return 0;
     }
 
