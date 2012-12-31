@@ -1,10 +1,10 @@
-#include <fuse.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <pthread.h>
 #include <stdlib.h>
+
+#include <fuse.h>
+#include <pthread.h>
 
 #include "device.h"
 
