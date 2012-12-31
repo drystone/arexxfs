@@ -1,3 +1,8 @@
+0.2.0 No longer a kernel module
+
+    * uses libusb-1.0 and fuse
+    * fuse files have 4 digit hex notation of raw device reading
+
 0.1.0 Builds with linux 3.0
 
     * builds with 3.0 as well as 2.6 kernel

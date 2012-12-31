@@ -1,25 +1,28 @@
-Disclaimer: use this software at your own risk
+fuse filesystem interface to the Arexx BS-500 data logger.
 
-Arexx tlx00 kernel module tested on debian 2.6.32 and 3.0.0 x86 kernel with
-Arexx BS-500 USB data logger.
+Depends on libusb (>=1.0) and libfuse (>=2.9)
 
-Installation:
+To run
+$ arexxfs <mountpoint>
 
-# cd tlx00
-# make
-# insmod tlx00
+A file is created in the mountpoint for each of the tempereature/humidity
+sensors. These files contain the raw 4-digit hex reading from the sensors.
 
-When the arexx device is attached /sys/tlx00 dircetory appears. A subdirectory
-of this is created for each sensor that is detected. This subdirectory is
-named after the sensor's unique device id and inside is a file named 'raw'
-which contains the raw reading from the sensor.
+To convert the hex values to useful values see:
 
-For example, to get raw data from device 9696:
+http://www.algorithm-forge.com/techblog/2010/01/linux-usb-driver-for-the-arexx-tl-500-%E2%80%93-part-ii/
 
-#cat /sys/tlx00/9696/raw
+    "Further investigation shows us that we can calculate the measurements from
+    RH sensors by (0.6 + Rawdata * 0.03328) RH%, from temperature sensors
+    TSN-TH70E by (-39.58 + Rawdata * 0.01) °C and from temperature sensors
+    TL-3TSN by (Rawdata * 0.0078) °C. These coefficients are based on the the
+    following linear regressions. With more data they will slightly change, but
+    given the accuracy and that you need to calibrate your sensors either way,
+    it’s a sufficient translation of uncalibrated sensor data."
 
-For simple temperature sensors the raw value should be multiplied by 0.0078 to
-get degrees celcius.
 
 With thanks to Kornelius Rohmeyer for his work in decoding the tlx00 USB protocol:
 http://www.algorithm-forge.com/techblog/2009/12/using-libusb-to-write-a-linux-usb-driver-for-the-arexx-tl-500-part-i/
+
+Disclaimer: use this software at your own risk
+

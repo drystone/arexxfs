@@ -1,12 +1,21 @@
-DEBFLAGS = -O2
-#DEBFLAGS = -O -g -DDEBUG
+TARGET=arexxfs
+LIBS=-lpthread -lfuse -lusb-1.0
+CFLAGS=-Wall -O2 -I. -I/usr/include -I/usr/include/libusb-1.0 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=29
 
-EXTRA_CFLAGS += $(DEBFLAGS)
+OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
+HEADERS = $(wildcard *.h)
 
-obj-m += tlx00.o
+.PHONY: default all clean
 
-all:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+default: $(TARGET)
+
+all: default
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) $(LIBS) -o $@
+
+%.o: %.c $(HEADERS)
+	$(CC) -c $(CFLAGS) $<
 
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	rm -f *.o $(TARGET) $(OBJECTS)
