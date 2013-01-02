@@ -10,5 +10,6 @@ struct _reading {
 
 extern tlx_reading * tlx_root_reading;
 extern time_t tlx_ctime, tlx_mtime;
+extern int tlx_running;
 
 void * tlx_thread(void *);
