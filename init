@@ -1,0 +1,40 @@
+#!/bin/sh
+# INIT script to start arexxfs
+
+### BEGIN INIT INFO
+# Provides:          arexxfs
+# Required-Start:    $local_fs $remote_fs $syslog
+# Required-Stop:     $local_fs $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      1
+# Short-Description: Start arexx fuse filesystem
+### END INIT INFO
+
+$MNTPOINT=/mnt/arexx
+
+[ -x /usr/bin/arexxfs ] || exit 1
+
+[ -d $MNTPOINT ] || /bin/mkdir $MNTPOINT || exit 1
+
+case "$1" in
+  start)
+    log_action_begin_msg "Starting arexxfs"
+    /usr/bin/arexxfs $MNTPOINT
+    log_action_end_msg 0
+    ;;
+  stop)
+    log_action_begin_msg "Stopping arexxfs"
+    /bin/fusermount -u $MNTPOINT
+    log_action_end_msg 0
+    ;;
+  restart|reload|force-reload)
+    $0 stop
+    $0 start
+    ;;
+  status)
+    ;;
+  *)
+  ;;
+esac
+        
+
