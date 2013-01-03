@@ -96,7 +96,7 @@ static void _tlx_loop(libusb_device_handle * handle)
         if (transferred == IOLEN && (iobuf[0] || iobuf[1])) {
             if (_record_reading((iobuf[3]<<8) + iobuf[2], (iobuf[4]<<8) + iobuf[5]) < 0)
                 break;
-        }
+        } else sleep(1);
         iobuf[0] = 3; // read
     }
 }
