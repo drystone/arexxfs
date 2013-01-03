@@ -1,5 +1,7 @@
 fuse filesystem interface to the Arexx BS-500 data logger.
 
+Copyright © 2013 John Hedges <john@drystone.co.uk>
+
 Depends on libusb (>=1.0) and libfuse (>=2.9)
 
 To run
@@ -24,5 +26,8 @@ http://www.algorithm-forge.com/techblog/2010/01/linux-usb-driver-for-the-arexx-t
 With thanks to Kornelius Rohmeyer for his work in decoding the tlx00 USB protocol:
 http://www.algorithm-forge.com/techblog/2009/12/using-libusb-to-write-a-linux-usb-driver-for-the-arexx-tl-500-part-i/
 
-Disclaimer: use this software at your own risk
+See License for lincensing.
 
+See INSTALL for installation instructions.
+
+Bug reports to John Hedges <john@drystone.co.uk>
