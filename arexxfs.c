@@ -4,58 +4,22 @@
 #include <stdlib.h>
 
 #include <fuse.h>
-#include <pthread.h>
 
 #include "device.h"
-
-static void _start_tlx()
-{
-    static pthread_mutex_t _start_tlx_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-    if (!tlx_running) {
-        pthread_mutex_lock(&_start_tlx_mutex);
-        if (!tlx_running) {
-            tlx_running = 1;
-            pthread_t th;
-            pthread_create(&th, NULL, tlx_thread, NULL);
-        }
-        pthread_mutex_unlock(&_start_tlx_mutex);
-    }
-}
-
-static tlx_reading * _get_reading(const char * sid)
-{
-    // make sure tlx device is still communicating
-    _start_tlx();
-
-    char * e;
-    long int id = strtol(sid, &e, 10);
-    if (*e != '\0')
-        return NULL;    // strtol didn't convert whole sid
-
-    tlx_reading * p = tlx_root_reading;
-    while (p) {
-        if ((long int)p->id == id)
-            return p;
-        p = p->next;
-    }
-
-    return NULL;
-}
 
 static int _getattr(const char *path, struct stat *stbuf)
 {
     memset(stbuf, 0, sizeof(struct stat));
 
     if (strcmp(path, "/") == 0) {
-        stbuf->st_mode = S_IFDIR | 0755;
+        stbuf->st_mode = S_IFDIR | 0555;
         stbuf->st_nlink = 2;
         stbuf->st_ctime = tlx_ctime;
         stbuf->st_mtime = tlx_mtime;
         return 0;
     }
 
-    tlx_reading * p = _get_reading(path + 1);
+    tlx_reading * p = tlx_get_reading(path + 1);
     if (p) {
         stbuf->st_mode = S_IFREG | 0444;
         stbuf->st_nlink = 1;
@@ -77,7 +41,7 @@ static int _readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
     
-    tlx_reading * p = tlx_root_reading;
+    tlx_reading * p = tlx_get_root();
     while (p) {
         char id[6]; // max 5-digit id
         sprintf(id, "%u", p->id);
@@ -93,7 +57,7 @@ static int _open(const char *path, struct fuse_file_info *fi)
     if ((fi->flags & 3) != O_RDONLY)
         return -EACCES;
 
-    if (_get_reading(path + 1) == NULL)
+    if (tlx_get_reading(path + 1) == NULL)
         return -ENOENT;
 
     return 0;
@@ -102,7 +66,7 @@ static int _open(const char *path, struct fuse_file_info *fi)
 static int _read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi)
 {
-    tlx_reading * p = _get_reading(path + 1);
+    tlx_reading * p = tlx_get_reading(path + 1);
     if (p == NULL)
         return -ENOENT;
 
@@ -125,7 +89,7 @@ static int _read(const char *path, char *buf, size_t size, off_t offset,
 
 static void * _init(struct fuse_conn_info * conn)
 {
-    _start_tlx();
+    tlx_init();
     return NULL;
 }
 

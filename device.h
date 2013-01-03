@@ -8,8 +8,8 @@ struct _reading {
     tlx_reading * next;
 };
 
-extern tlx_reading * tlx_root_reading;
 extern time_t tlx_ctime, tlx_mtime;
-extern int tlx_running;
 
-void * tlx_thread(void *);
+void tlx_init();
+tlx_reading * tlx_get_root();
+tlx_reading * tlx_get_reading(const char * id);

@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <syslog.h>
 
+#include <pthread.h>
+
 #include "device.h"
 
 #define VENDOR  0x0451
@@ -14,13 +16,45 @@
 #define ENDPOINT_UP   0x81
 #define IOLEN   64
 
-tlx_reading * tlx_root_reading = NULL;
 time_t tlx_mtime, tlx_ctime;
-int tlx_running = 0;
+
+static tlx_reading * _root_reading = NULL;
+static int tlx_running = 0;
+
+static void _start_tlx_thread();
+
+void tlx_init() {
+    _start_tlx_thread();
+}
+
+tlx_reading * tlx_get_root() {
+    _start_tlx_thread();
+    return _root_reading;
+}
+
+tlx_reading * tlx_get_reading(const char * sid)
+{
+    // make sure tlx device is still communicating
+    _start_tlx_thread();
+
+    char * e;
+    long int id = strtol(sid, &e, 10);
+    if (*e != '\0')
+        return NULL;    // strtol didn't convert whole sid
+
+    tlx_reading * p = _root_reading;
+    while (p) {
+        if ((long int)p->id == id)
+            return p;
+        p = p->next;
+    }
+
+    return NULL;
+}
 
 static int _record_reading(unsigned int id, unsigned int raw)
 {
-    tlx_reading * p = tlx_root_reading;
+    tlx_reading * p = _root_reading;
 
     while (p) {
         if (p->id == id) {
@@ -39,12 +73,12 @@ static int _record_reading(unsigned int id, unsigned int raw)
     p->id = id;
     p->raw = raw;
     p->ctime = p->mtime = tlx_mtime = time(NULL);
-    p->next = tlx_root_reading;
-    tlx_root_reading = p;
+    p->next = _root_reading;
+    _root_reading = p;
     return 0;
 }
 
-static void do_loop(libusb_device_handle * handle)
+static void _tlx_loop(libusb_device_handle * handle)
 {
     int transferred;
     unsigned char iobuf[IOLEN];
@@ -67,7 +101,7 @@ static void do_loop(libusb_device_handle * handle)
     }
 }
 
-void * tlx_thread(void * arg) {
+void * _tlx_thread(void * arg) {
     libusb_device **devs, **pdev;
     libusb_device_handle *handle;
     (void) arg;
@@ -108,7 +142,7 @@ void * tlx_thread(void * arg) {
     if (libusb_kernel_driver_active(handle, 0) == 1)
         libusb_detach_kernel_driver(handle, 0);
     libusb_claim_interface(handle, 0);
-    do_loop(handle);
+    _tlx_loop(handle);
     libusb_close(handle);
 
 exit:
@@ -118,5 +152,20 @@ exit1:
 exit2:
     tlx_running = 0;
     return NULL;
+}
+
+static void _start_tlx_thread()
+{
+    static pthread_mutex_t _start_tlx_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    if (!tlx_running) {
+        pthread_mutex_lock(&_start_tlx_mutex);
+        if (!tlx_running) {
+            tlx_running = 1;
+            pthread_t th;
+            pthread_create(&th, NULL, _tlx_thread, NULL);
+        }
+        pthread_mutex_unlock(&_start_tlx_mutex);
+    }
 }
 
