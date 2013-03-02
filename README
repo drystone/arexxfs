@@ -26,7 +26,7 @@ http://www.algorithm-forge.com/techblog/2010/01/linux-usb-driver-for-the-arexx-t
 With thanks to Kornelius Rohmeyer for his work in decoding the tlx00 USB protocol:
 http://www.algorithm-forge.com/techblog/2009/12/using-libusb-to-write-a-linux-usb-driver-for-the-arexx-tl-500-part-i/
 
-See License for lincensing.
+See License for licensing.
 
 See INSTALL for installation instructions.
 
